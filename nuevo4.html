@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extractor de Contingut d'Acordió Bootstrap</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        .drag-area {
+            border: 2px dashed #9ca3af; /* Gray border */
+            background-color: #f9fafb; /* Lighter gray background */
+            transition: background-color 0.3s ease;
+        }
+        .drag-area.hover {
+            background-color: #e5e7eb; /* Even lighter gray on hover */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl border border-gray-200">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Extractor de Contingut d'Acordió Bootstrap</h1>
+
+        <div id="dragArea" class="drag-area flex flex-col items-center justify-center p-10 rounded-lg cursor-pointer mb-6 text-gray-600">
+            <svg class="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0015 12H9a3 3 0 01-3-3V5a2 2 0 00-2-2h-1a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2h-1a2 2 0 00-2 2v2"></path>
+            </svg>
+            <p class="text-lg font-medium text-center">Arrossegueu i deixeu anar un fitxer HTML aquí</p>
+            <p class="text-sm text-center mt-1">o feu clic per seleccionar-ne un</p>
+            <input type="file" id="fileInput" accept=".html" class="hidden">
+        </div>
+
+        <div id="messageBox" class="hidden bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
+            <strong class="font-bold">Informació:</strong>
+            <span class="block sm:inline" id="messageText"></span>
+        </div>
+
+        <button id="downloadButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 hidden">
+            Descarrega el Fitxer HTML Modificat
+        </button>
+
+        <div id="previewArea" class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg overflow-auto max-h-96 hidden">
+            <h2 class="text-xl font-semibold text-gray-700 mb-3">Previsualització del Contingut Extret:</h2>
+            <div id="extractedContent" class="prose max-w-none">
+                <!-- Extracted content will be displayed here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dragArea = document.getElementById('dragArea');
+        const fileInput = document.getElementById('fileInput');
+        const downloadButton = document.getElementById('downloadButton');
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        const previewArea = document.getElementById('previewArea');
+        const extractedContentDiv = document.getElementById('extractedContent');
+
+        let modifiedHtmlContent = ''; // Variable to store the processed HTML
+
+        // Function to display messages
+        function showMessage(type, message) {
+            messageBox.classList.remove('hidden', 'bg-red-100', 'border-red-400', 'text-red-700', 'bg-blue-100', 'border-blue-400', 'text-blue-700');
+            if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
+            } else {
+                messageBox.classList.add('bg-blue-100', 'border-blue-400', 'text-blue-700');
+            }
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
+        }
+
+        // Hide message box
+        function hideMessage() {
+            messageBox.classList.add('hidden');
+        }
+
+        // Handle drag over event
+        dragArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dragArea.classList.add('hover');
+            showMessage('info', 'Deixeu anar el fitxer HTML aquí.');
+        });
+
+        // Handle drag leave event
+        dragArea.addEventListener('dragleave', () => {
+            dragArea.classList.remove('hover');
+            hideMessage();
+        });
+
+        // Handle drop event
+        dragArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragArea.classList.remove('hover');
+            hideMessage();
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        });
+
+        // Handle file input click (alternative to drag and drop)
+        dragArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        });
+
+        // Main function to process the file
+        function processFile(file) {
+            if (file.type !== 'text/html') {
+                showMessage('error', 'Si us plau, arrossegueu o seleccioneu un fitxer HTML vàlid.');
+                return;
+            }
+
+            showMessage('info', `Processant el fitxer: ${file.name}...`);
+            downloadButton.classList.add('hidden');
+            previewArea.classList.add('hidden');
+            extractedContentDiv.innerHTML = '';
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const htmlString = e.target.result;
+                try {
+                    modifiedHtmlContent = extractAccordionContent(htmlString);
+                    showMessage('info', 'Fitxer processat amb èxit! Ja podeu descarregar el contingut modificat.');
+                    downloadButton.classList.remove('hidden');
+                    previewArea.classList.remove('hidden');
+                    extractedContentDiv.innerHTML = modifiedHtmlContent; // Display preview
+                } catch (error) {
+                    showMessage('error', `Error en processar el fitxer: ${error.message}`);
+                    console.error('Error processing file:', error);
+                }
+            };
+            reader.onerror = () => {
+                showMessage('error', 'No s\'ha pogut llegir el fitxer.');
+            };
+            reader.readAsText(file);
+        }
+
+        // Function to extract and make accordion content visible
+        function extractAccordionContent(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+
+            // Find all elements that are part of a Bootstrap accordion collapse
+            const collapseElements = doc.querySelectorAll('.accordion-collapse.collapse');
+
+            collapseElements.forEach(collapseEl => {
+                // Remove the 'collapse' class
+                collapseEl.classList.remove('collapse');
+                // Add the 'show' class to make it visible
+                collapseEl.classList.add('show');
+
+                // Find the associated accordion header/button and set aria-expanded to true
+                // This assumes a common Bootstrap structure where the button is usually
+                // a sibling of the parent of accordion-collapse (accordion-item)
+                const accordionItem = collapseEl.closest('.accordion-item');
+                if (accordionItem) {
+                    const accordionButton = accordionItem.querySelector('[data-bs-toggle="collapse"]');
+                    if (accordionButton) {
+                        accordionButton.setAttribute('aria-expanded', 'true');
+                    }
+                }
+            });
+
+            // Return the modified HTML content of the body, or the whole document if preferred
+            // For simplicity, we'll return the innerHTML of the body, but you could reconstruct the whole document.
+            // To get the full document, you'd serialize doc.documentElement.outerHTML
+            return doc.documentElement.outerHTML;
+        }
+
+        // Handle download button click
+        downloadButton.addEventListener('click', () => {
+            if (modifiedHtmlContent) {
+                const blob = new Blob([modifiedHtmlContent], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'contingut_acordio_extret.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showMessage('info', 'Fitxer descarregat amb èxit!');
+            } else {
+                showMessage('error', 'No hi ha contingut per descarregar. Si us plau, processa un fitxer primer.');
+            }
+        });
+    </script>
+</body>
+</html>
