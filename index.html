@@ -3,200 +3,605 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Extractor de Contingut d'Acordió Bootstrap</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Extractor & Desplegador d'Acordions HTML (Bootstrap & Més)</title>
+    <meta name="description" content="Eina web per desplegar automàticament el contingut d'acordions HTML de Bootstrap (v4/v5) i visualitzar o descarregar el resultat completament obert.">
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Inter Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Light gray background */
         }
-        .drag-area {
-            border: 2px dashed #9ca3af; /* Gray border */
-            background-color: #f9fafb; /* Lighter gray background */
-            transition: background-color 0.3s ease;
+        .font-mono-code {
+            font-family: 'JetBrains Mono', monospace;
         }
-        .drag-area.hover {
-            background-color: #e5e7eb; /* Even lighter gray on hover */
+        .drag-active {
+            border-color: #3b82f6 !important;
+            background-color: #eff6ff !important;
+            transform: scale(1.01);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl border border-gray-200">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Extractor de Contingut d'Acordió Bootstrap</h1>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col selection:bg-blue-100 selection:text-blue-800">
 
-        <div id="dragArea" class="drag-area flex flex-col items-center justify-center p-10 rounded-lg cursor-pointer mb-6 text-gray-600">
-            <svg class="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0015 12H9a3 3 0 01-3-3V5a2 2 0 00-2-2h-1a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2h-1a2 2 0 00-2 2v2"></path>
-            </svg>
-            <p class="text-lg font-medium text-center">Arrossegueu i deixeu anar un fitxer HTML aquí</p>
-            <p class="text-sm text-center mt-1">o feu clic per seleccionar-ne un</p>
-            <input type="file" id="fileInput" accept=".html" class="hidden">
-        </div>
+    <!-- Header / Navbar -->
+    <header class="border-b border-slate-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-30">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-900 leading-tight text-lg flex items-center gap-2">
+                        AcordionsHTML
+                        <span class="text-[10px] font-semibold uppercase tracking-wider bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">v2.0</span>
+                    </h1>
+                    <p class="text-xs text-slate-500">Extractor & Desplegador de Contingut Web</p>
+                </div>
+            </div>
 
-        <div id="messageBox" class="hidden bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
-            <strong class="font-bold">Informació:</strong>
-            <span class="block sm:inline" id="messageText"></span>
-        </div>
-
-        <button id="downloadButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 hidden">
-            Descarrega el Fitxer HTML Modificat
-        </button>
-
-        <div id="previewArea" class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg overflow-auto max-h-96 hidden">
-            <h2 class="text-xl font-semibold text-gray-700 mb-3">Previsualització del Contingut Extret:</h2>
-            <div id="extractedContent" class="prose max-w-none">
-                <!-- Extracted content will be displayed here -->
+            <div class="flex items-center space-x-3">
+                <button id="loadDemoBtn" class="text-xs font-medium text-slate-600 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 border border-slate-200 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Carregar exemple
+                </button>
+                <a href="https://github.com/miquelangelfuentes/acordionsHTML" target="_blank" rel="noopener noreferrer" class="text-slate-500 hover:text-slate-900 transition-colors p-2 rounded-lg hover:bg-slate-100" title="Veure a GitHub">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                    </svg>
+                </a>
             </div>
         </div>
-    </div>
+    </header>
 
+    <!-- Main Container -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8">
+
+        <!-- Hero info -->
+        <div class="text-center max-w-2xl mx-auto mb-8">
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                Desplega i extreu tot el contingut d'acordions HTML
+            </h2>
+            <p class="mt-2 text-sm sm:text-base text-slate-600">
+                Pujat un fitxer HTML o enganxa el codi: obrirem automàticament tots els panells col·lapsats de Bootstrap (v4/v5) i elements plegables perquè en puguis extreure el text complet.
+            </p>
+        </div>
+
+        <!-- Input Card -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8 mb-6">
+            
+            <!-- Tabs selection -->
+            <div class="flex border-b border-slate-200 mb-6">
+                <button id="tabFileBtn" class="flex items-center gap-2 pb-3 px-4 font-semibold text-sm border-b-2 border-blue-600 text-blue-600 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0015 12H9a3 3 0 01-3-3V5a2 2 0 00-2-2h-1a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2h-1a2 2 0 00-2 2v2" />
+                    </svg>
+                    Carregar Fitxer (.html)
+                </button>
+                <button id="tabPasteBtn" class="flex items-center gap-2 pb-3 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Enganxar Codi Directament
+                </button>
+            </div>
+
+            <!-- Tab 1: File Upload / Drag & Drop -->
+            <div id="tabFileContent">
+                <div id="dragArea" class="border-2 border-dashed border-slate-300 rounded-xl p-8 sm:p-12 text-center cursor-pointer hover:border-blue-500 hover:bg-slate-50/70 transition-all group">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-100 transition-all">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0015 12H9a3 3 0 01-3-3V5a2 2 0 00-2-2h-1a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2h-1a2 2 0 00-2 2v2" />
+                        </svg>
+                    </div>
+                    <p class="text-base font-semibold text-slate-800">
+                        Arrossega i deixa anar un fitxer HTML aquí
+                    </p>
+                    <p class="text-sm text-slate-500 mt-1">
+                        o bé <span class="text-blue-600 font-medium underline underline-offset-2">selecciona'n un des del teu ordinador</span>
+                    </p>
+                    <p class="text-xs text-slate-400 mt-3">
+                        Format suportat: .html, .htm (Processament 100% local al teu navegador)
+                    </p>
+                    <input type="file" id="fileInput" accept=".html,.htm" class="hidden">
+                </div>
+            </div>
+
+            <!-- Tab 2: Paste HTML Code -->
+            <div id="tabPasteContent" class="hidden">
+                <label for="pastedHtmlInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                    Enganxa el teu codi HTML amb acordions:
+                </label>
+                <textarea id="pastedHtmlInput" rows="7" class="w-full p-3 font-mono-code text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Enganxa aquí el codi HTML (p. ex: &lt;div class=&quot;accordion&quot;&gt;...)..."></textarea>
+                <div class="mt-3 flex justify-end">
+                    <button id="processPastedBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Processar Codi Enganxat
+                    </button>
+                </div>
+            </div>
+
+            <!-- Notification / Feedback Toast Banner -->
+            <div id="messageBanner" class="hidden mt-5 p-4 rounded-xl text-sm flex items-start gap-3 transition-all" role="alert">
+                <span id="messageIcon" class="mt-0.5 flex-shrink-0"></span>
+                <div class="flex-1" id="messageContent"></div>
+                <button id="closeMessageBtn" class="text-slate-400 hover:text-slate-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Result & Actions Section (Hidden by default) -->
+        <div id="resultsSection" class="hidden space-y-6">
+
+            <!-- Metrics Card -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 font-medium">Panells Desplegats</div>
+                        <div id="statCount" class="text-xl font-bold text-slate-800">0</div>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 font-medium">Nom del Fitxer</div>
+                        <div id="statFileName" class="text-sm font-semibold text-slate-800 truncate max-w-[170px]" title="">-</div>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 font-medium">Mida del Codi</div>
+                        <div id="statSize" class="text-sm font-semibold text-slate-800">0 KB</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Toolbar -->
+            <div class="bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center space-x-2">
+                    <button id="viewVisualBtn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Vista Prèvia Renderitzada
+                    </button>
+                    <button id="viewCodeBtn" class="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-1.5 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                        </svg>
+                        Codi Font HTML
+                    </button>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button id="copyCodeBtn" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 flex items-center gap-1.5 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                        <span id="copyBtnText">Copiar HTML</span>
+                    </button>
+
+                    <button id="downloadButton" class="px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center gap-1.5 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Descarregar HTML Desplegat
+                    </button>
+
+                    <button id="resetBtn" class="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100" title="Reiniciar">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Preview Card -->
+            <div class="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
+                <div class="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs text-slate-500">
+                    <span class="font-medium flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Previsualització del Contingut Obert
+                    </span>
+                    <span class="text-[11px] text-slate-400">Els continguts ocults s'han obert completament</span>
+                </div>
+
+                <!-- Visual Sandbox Iframe -->
+                <div id="visualPreviewContainer" class="p-4 bg-white">
+                    <iframe id="previewIframe" class="w-full h-[450px] border border-slate-100 rounded-lg bg-white shadow-inner" sandbox="allow-same-origin"></iframe>
+                </div>
+
+                <!-- Raw HTML Code View -->
+                <div id="codePreviewContainer" class="hidden p-4 bg-slate-900 text-slate-100">
+                    <pre class="overflow-auto max-h-[450px] text-xs font-mono-code leading-relaxed p-2" id="codePreviewBlock"></pre>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">
+        <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span>Desenvolupat per <strong class="text-slate-700">Miquel Àngel Fuentes</strong></span>
+            <span>Codi font obert a <a href="https://github.com/miquelangelfuentes/acordionsHTML" class="text-blue-600 hover:underline">GitHub</a> · Gratuït i 100% al navegador</span>
+        </div>
+    </footer>
+
+    <!-- Script Application Logic -->
     <script>
+        // DOM Elements
         const dragArea = document.getElementById('dragArea');
         const fileInput = document.getElementById('fileInput');
+        const tabFileBtn = document.getElementById('tabFileBtn');
+        const tabPasteBtn = document.getElementById('tabPasteBtn');
+        const tabFileContent = document.getElementById('tabFileContent');
+        const tabPasteContent = document.getElementById('tabPasteContent');
+        const pastedHtmlInput = document.getElementById('pastedHtmlInput');
+        const processPastedBtn = document.getElementById('processPastedBtn');
+        const loadDemoBtn = document.getElementById('loadDemoBtn');
+
+        const messageBanner = document.getElementById('messageBanner');
+        const messageContent = document.getElementById('messageContent');
+        const messageIcon = document.getElementById('messageIcon');
+        const closeMessageBtn = document.getElementById('closeMessageBtn');
+
+        const resultsSection = document.getElementById('resultsSection');
+        const statCount = document.getElementById('statCount');
+        const statFileName = document.getElementById('statFileName');
+        const statSize = document.getElementById('statSize');
+
+        const viewVisualBtn = document.getElementById('viewVisualBtn');
+        const viewCodeBtn = document.getElementById('viewCodeBtn');
+        const visualPreviewContainer = document.getElementById('visualPreviewContainer');
+        const codePreviewContainer = document.getElementById('codePreviewContainer');
+        const previewIframe = document.getElementById('previewIframe');
+        const codePreviewBlock = document.getElementById('codePreviewBlock');
+
+        const copyCodeBtn = document.getElementById('copyCodeBtn');
+        const copyBtnText = document.getElementById('copyBtnText');
         const downloadButton = document.getElementById('downloadButton');
-        const messageBox = document.getElementById('messageBox');
-        const messageText = document.getElementById('messageText');
-        const previewArea = document.getElementById('previewArea');
-        const extractedContentDiv = document.getElementById('extractedContent');
+        const resetBtn = document.getElementById('resetBtn');
 
-        let modifiedHtmlContent = ''; // Variable to store the processed HTML
+        // State variables
+        let processedHtml = '';
+        let originalFileName = 'contingut_acordio.html';
 
-        // Function to display messages
-        function showMessage(type, message) {
-            messageBox.classList.remove('hidden', 'bg-red-100', 'border-red-400', 'text-red-700', 'bg-blue-100', 'border-blue-400', 'text-blue-700');
+        // Tab Switching
+        tabFileBtn.addEventListener('click', () => {
+            tabFileBtn.className = "flex items-center gap-2 pb-3 px-4 font-semibold text-sm border-b-2 border-blue-600 text-blue-600 transition-colors";
+            tabPasteBtn.className = "flex items-center gap-2 pb-3 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors";
+            tabFileContent.classList.remove('hidden');
+            tabPasteContent.classList.add('hidden');
+        });
+
+        tabPasteBtn.addEventListener('click', () => {
+            tabPasteBtn.className = "flex items-center gap-2 pb-3 px-4 font-semibold text-sm border-b-2 border-blue-600 text-blue-600 transition-colors";
+            tabFileBtn.className = "flex items-center gap-2 pb-3 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors";
+            tabPasteContent.classList.remove('hidden');
+            tabFileContent.classList.add('hidden');
+        });
+
+        // View toggle (Rendered vs Code)
+        viewVisualBtn.addEventListener('click', () => {
+            viewVisualBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5 transition-all";
+            viewCodeBtn.className = "px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-1.5 transition-all";
+            visualPreviewContainer.classList.remove('hidden');
+            codePreviewContainer.classList.add('hidden');
+        });
+
+        viewCodeBtn.addEventListener('click', () => {
+            viewCodeBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5 transition-all";
+            viewVisualBtn.className = "px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-1.5 transition-all";
+            codePreviewContainer.classList.remove('hidden');
+            visualPreviewContainer.classList.add('hidden');
+        });
+
+        // Feedback Banner
+        function showNotification(type, title, text) {
+            messageBanner.classList.remove('hidden', 'bg-blue-50', 'text-blue-800', 'border-blue-200', 'bg-red-50', 'text-red-800', 'border-red-200', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-200');
+            messageBanner.classList.add('border');
+
             if (type === 'error') {
-                messageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
+                messageBanner.classList.add('bg-red-50', 'text-red-800', 'border-red-200');
+                messageIcon.innerHTML = `<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+            } else if (type === 'success') {
+                messageBanner.classList.add('bg-emerald-50', 'text-emerald-800', 'border-emerald-200');
+                messageIcon.innerHTML = `<svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
             } else {
-                messageBox.classList.add('bg-blue-100', 'border-blue-400', 'text-blue-700');
+                messageBanner.classList.add('bg-blue-50', 'text-blue-800', 'border-blue-200');
+                messageIcon.innerHTML = `<svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
             }
-            messageText.textContent = message;
-            messageBox.classList.remove('hidden');
+
+            messageContent.innerHTML = `<strong>${title}</strong> <span>${text}</span>`;
+            messageBanner.classList.remove('hidden');
         }
 
-        // Hide message box
-        function hideMessage() {
-            messageBox.classList.add('hidden');
+        closeMessageBtn.addEventListener('click', () => {
+            messageBanner.classList.add('hidden');
+        });
+
+        // Core Accordion Extractor & Expander Logic
+        function extractAndExpandAccordions(rawHtml) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(rawHtml, 'text/html');
+            let modifiedItems = 0;
+
+            // 1. Process Bootstrap 5 & Bootstrap 4 collapse elements
+            const collapseElements = doc.querySelectorAll('.accordion-collapse, .collapse, [data-bs-parent], [data-parent]');
+            collapseElements.forEach(el => {
+                let changed = false;
+                if (el.classList.contains('collapse')) {
+                    el.classList.remove('collapse');
+                    changed = true;
+                }
+                if (!el.classList.contains('show')) {
+                    el.classList.add('show');
+                    changed = true;
+                }
+                if (el.style.display === 'none') {
+                    el.style.removeProperty('display');
+                    changed = true;
+                }
+                if (el.style.height === '0px' || el.style.height === '0') {
+                    el.style.removeProperty('height');
+                    changed = true;
+                }
+                if (changed) modifiedItems++;
+            });
+
+            // 2. Adjust Accordion Buttons and Headers
+            const accordionButtons = doc.querySelectorAll('[data-bs-toggle="collapse"], [data-toggle="collapse"], .accordion-button');
+            accordionButtons.forEach(btn => {
+                btn.classList.remove('collapsed');
+                btn.setAttribute('aria-expanded', 'true');
+            });
+
+            // 3. Process HTML5 <details> elements if present
+            const detailsList = doc.querySelectorAll('details:not([open])');
+            detailsList.forEach(d => {
+                d.setAttribute('open', '');
+                modifiedItems++;
+            });
+
+            // Ensure Bootstrap stylesheet is included if not present in preview
+            const hasBootstrap = doc.querySelector('link[href*="bootstrap"]') || doc.querySelector('script[src*="bootstrap"]');
+            if (!hasBootstrap) {
+                const bootstrapCss = doc.createElement('link');
+                bootstrapCss.rel = 'stylesheet';
+                bootstrapCss.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css';
+                doc.head.appendChild(bootstrapCss);
+            }
+
+            return {
+                resultHtml: doc.documentElement.outerHTML,
+                count: modifiedItems
+            };
         }
 
-        // Handle drag over event
-        dragArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dragArea.classList.add('hover');
-            showMessage('info', 'Deixeu anar el fitxer HTML aquí.');
-        });
+        // Render processed results to screen
+        function displayProcessedData(html, count, name) {
+            processedHtml = html;
+            originalFileName = name;
 
-        // Handle drag leave event
-        dragArea.addEventListener('dragleave', () => {
-            dragArea.classList.remove('hover');
-            hideMessage();
-        });
+            statCount.textContent = count;
+            statFileName.textContent = name;
+            statFileName.title = name;
 
-        // Handle drop event
-        dragArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dragArea.classList.remove('hover');
-            hideMessage();
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                processFile(files[0]);
-            }
-        });
+            const sizeKb = (new Blob([html]).size / 1024).toFixed(1);
+            statSize.textContent = `${sizeKb} KB`;
 
-        // Handle file input click (alternative to drag and drop)
-        dragArea.addEventListener('click', () => {
-            fileInput.click();
-        });
+            // Update preview iframe
+            previewIframe.srcdoc = processedHtml;
 
-        fileInput.addEventListener('change', (e) => {
-            const files = e.target.files;
-            if (files.length > 0) {
-                processFile(files[0]);
-            }
-        });
+            // Update code view
+            codePreviewBlock.textContent = processedHtml;
 
-        // Main function to process the file
-        function processFile(file) {
-            if (file.type !== 'text/html') {
-                showMessage('error', 'Si us plau, arrossegueu o seleccioneu un fitxer HTML vàlid.');
+            // Reveal results
+            resultsSection.classList.remove('hidden');
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            showNotification('success', 'Processament completat!', `S'han trobat i desplegat ${count} elements/panells col·lapsats.`);
+        }
+
+        // File Handler
+        function handleFile(file) {
+            if (!file.name.toLowerCase().endsWith('.html') && !file.name.toLowerCase().endsWith('.htm')) {
+                showNotification('error', 'Fitxer no vàlid:', 'Si us plau, selecciona un fitxer amb extensió .html o .htm');
                 return;
             }
 
-            showMessage('info', `Processant el fitxer: ${file.name}...`);
-            downloadButton.classList.add('hidden');
-            previewArea.classList.add('hidden');
-            extractedContentDiv.innerHTML = '';
-
             const reader = new FileReader();
             reader.onload = (e) => {
-                const htmlString = e.target.result;
                 try {
-                    modifiedHtmlContent = extractAccordionContent(htmlString);
-                    showMessage('info', 'Fitxer processat amb èxit! Ja podeu descarregar el contingut modificat.');
-                    downloadButton.classList.remove('hidden');
-                    previewArea.classList.remove('hidden');
-                    extractedContentDiv.innerHTML = modifiedHtmlContent; // Display preview
-                } catch (error) {
-                    showMessage('error', `Error en processar el fitxer: ${error.message}`);
-                    console.error('Error processing file:', error);
+                    const text = e.target.result;
+                    const { resultHtml, count } = extractAndExpandAccordions(text);
+                    displayProcessedData(resultHtml, count, file.name);
+                } catch (err) {
+                    showNotification('error', 'Error en processar:', err.message);
                 }
             };
             reader.onerror = () => {
-                showMessage('error', 'No s\'ha pogut llegir el fitxer.');
+                showNotification('error', 'Error de lectura:', 'No s\'ha pogut llegir el fitxer local.');
             };
             reader.readAsText(file);
         }
 
-        // Function to extract and make accordion content visible
-        function extractAccordionContent(htmlString) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlString, 'text/html');
+        // Drag & Drop events
+        dragArea.addEventListener('click', () => fileInput.click());
 
-            // Find all elements that are part of a Bootstrap accordion collapse
-            const collapseElements = doc.querySelectorAll('.accordion-collapse.collapse');
-
-            collapseElements.forEach(collapseEl => {
-                // Remove the 'collapse' class
-                collapseEl.classList.remove('collapse');
-                // Add the 'show' class to make it visible
-                collapseEl.classList.add('show');
-
-                // Find the associated accordion header/button and set aria-expanded to true
-                // This assumes a common Bootstrap structure where the button is usually
-                // a sibling of the parent of accordion-collapse (accordion-item)
-                const accordionItem = collapseEl.closest('.accordion-item');
-                if (accordionItem) {
-                    const accordionButton = accordionItem.querySelector('[data-bs-toggle="collapse"]');
-                    if (accordionButton) {
-                        accordionButton.setAttribute('aria-expanded', 'true');
-                    }
-                }
-            });
-
-            // Return the modified HTML content of the body, or the whole document if preferred
-            // For simplicity, we'll return the innerHTML of the body, but you could reconstruct the whole document.
-            // To get the full document, you'd serialize doc.documentElement.outerHTML
-            return doc.documentElement.outerHTML;
-        }
-
-        // Handle download button click
-        downloadButton.addEventListener('click', () => {
-            if (modifiedHtmlContent) {
-                const blob = new Blob([modifiedHtmlContent], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'contingut_acordio_extret.html';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                showMessage('info', 'Fitxer descarregat amb èxit!');
-            } else {
-                showMessage('error', 'No hi ha contingut per descarregar. Si us plau, processa un fitxer primer.');
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                handleFile(e.target.files[0]);
             }
+        });
+
+        ['dragenter', 'dragover'].forEach(name => {
+            dragArea.addEventListener(name, (e) => {
+                e.preventDefault();
+                dragArea.classList.add('drag-active');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(name => {
+            dragArea.addEventListener(name, (e) => {
+                e.preventDefault();
+                dragArea.classList.remove('drag-active');
+            });
+        });
+
+        dragArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // Process Pasted Code
+        processPastedBtn.addEventListener('click', () => {
+            const raw = pastedHtmlInput.value.trim();
+            if (!raw) {
+                showNotification('error', 'Codi buit:', 'Si us plau, enganxa una mica de codi HTML abans de processar.');
+                return;
+            }
+            try {
+                const { resultHtml, count } = extractAndExpandAccordions(raw);
+                displayProcessedData(resultHtml, count, 'codi_enganxat.html');
+            } catch (err) {
+                showNotification('error', 'Error en processar:', err.message);
+            }
+        });
+
+        // Copy HTML to Clipboard
+        copyCodeBtn.addEventListener('click', () => {
+            if (!processedHtml) return;
+            navigator.clipboard.writeText(processedHtml).then(() => {
+                copyBtnText.textContent = 'Copiat!';
+                copyCodeBtn.classList.add('bg-emerald-100', 'text-emerald-800', 'border-emerald-300');
+                setTimeout(() => {
+                    copyBtnText.textContent = 'Copiar HTML';
+                    copyCodeBtn.classList.remove('bg-emerald-100', 'text-emerald-800', 'border-emerald-300');
+                }, 2000);
+            }).catch(() => {
+                showNotification('error', 'Error:', 'No s\'ha pogut copiar automàticament al porta-retalls.');
+            });
+        });
+
+        // Download Processed File
+        downloadButton.addEventListener('click', () => {
+            if (!processedHtml) return;
+            const baseName = originalFileName.replace(/\.[^/.]+$/, "");
+            const finalName = `${baseName}_desplegat.html`;
+
+            const blob = new Blob([processedHtml], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = finalName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showNotification('success', 'Descarregat!', `Fitxer desat com a "${finalName}".`);
+        });
+
+        // Reset
+        resetBtn.addEventListener('click', () => {
+            processedHtml = '';
+            resultsSection.classList.add('hidden');
+            fileInput.value = '';
+            pastedHtmlInput.value = '';
+            messageBanner.classList.add('hidden');
+        });
+
+        // Demo sample loader
+        loadDemoBtn.addEventListener('click', () => {
+            const sample = `<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Exemple Acordió Bootstrap</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="p-4">
+    <h2>Exemple d'Acordió Bootstrap Col·lapsat</h2>
+    <div class="accordion" id="accordionExample">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                    Secció 1: Introducció al Projecte
+                </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                    Aquest és el contingut intern que estava completament plegat i invisible fins que AcordionsHTML l'ha desplegat automàticament.
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                    Secció 2: Dades i Estadístiques
+                </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                    Contingut de la segona pestanya: ara tot el document és apte per imprimir, desar o analitzar sense haver de fer clics manuals.
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+            const { resultHtml, count } = extractAndExpandAccordions(sample);
+            displayProcessedData(resultHtml, count, 'exemple_demo.html');
         });
     </script>
 </body>
